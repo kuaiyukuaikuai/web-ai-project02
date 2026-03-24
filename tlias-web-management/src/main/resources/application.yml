@@ -1,0 +1,38 @@
+#配置数据库
+spring:
+  application:
+    name: tlias-web-management
+  datasource:
+    url: jdbc:mysql://localhost:3306/tlias
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+  servlet:
+    multipart:
+      #单个文件最大上传大小限制
+      max-file-size: 10MB
+      #请求最大上传大小限制
+      max-request-size: 100MB
+
+#配置mybatis
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #驼峰命名
+    map-underscore-to-camel-case: true
+
+#配置pagehelper
+pagehelper:
+  reasonable: true
+  helper-dialect: mysql
+
+#配置日志信息,查看spring事务管理的底层日志
+logging:
+    level:
+      org.springframework.jdbc.support.JdbcTransactionManager: debug
+
+aliyun:
+  oss:
+      endpoint: https://oss-cn-beijing.aliyuncs.com
+      bucketName: java-ai-kuaiyukuaikuai
+      region: cn-beijing

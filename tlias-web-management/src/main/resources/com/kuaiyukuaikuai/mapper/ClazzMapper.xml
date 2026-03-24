@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kuaiyukuaikuai.mapper.ClazzMapper">
+
+    <!-- 分页查询班级列表（动态 SQL） -->
+    <select id="list" parameterType="com.kuaiyukuaikuai.pojo.ClazzQueryParam" resultType="com.kuaiyukuaikuai.pojo.Clazz">
+        SELECT c.*,e.name AS masterName
+        FROM clazz c
+        LEFT JOIN emp e
+        ON c.master_id = e.id
+        <where>
+            <if test="name != null and name != ''">
+                AND c.name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="begin != null">
+                AND c.end_date &gt;= #{begin}
+            </if>
+            <if test="end != null">
+                AND c.end_date &lt;= #{end}
+            </if>
+        </where>
+        ORDER BY c.create_time DESC
+    </select>
+
+    <insert id="insert">
+        INSERT INTO clazz (
+            name,
+            room,
+            begin_date,
+            end_date,
+            master_id,
+            subject,
+            create_time,
+            update_time
+        ) VALUES (
+            #{name},
+            #{room},
+            #{beginDate},
+            #{endDate},
+            #{masterId},
+            #{subject},
+            #{createTime},
+            #{updateTime}
+        )
+    </insert>
+
+    <select id="getById" resultType="com.kuaiyukuaikuai.pojo.Clazz">
+        SELECT
+            c.*,
+            e.name AS master_name,
+            CASE
+                WHEN c.end_date IS NULL THEN '未开班'
+                WHEN c.end_date &lt; CURDATE() THEN '已结课'
+                ELSE '在读'
+            END AS status
+        FROM clazz c
+        LEFT JOIN emp e ON c.master_id = e.id
+        WHERE c.id = #{id}
+    </select>
+
+    <update id="updateById">
+        UPDATE clazz
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="room != null and room != ''">
+                room = #{room},
+            </if>
+            <if test="beginDate != null">
+                begin_date = #{beginDate},
+            </if>
+            <if test="endDate != null">
+                end_date = #{endDate},
+            </if>
+            <if test="masterId != null">
+                master_id = #{masterId},
+            </if>
+            <if test="subject != null">
+                subject = #{subject},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM clazz WHERE id = #{id}
+    </delete>
+
+    <select id="listAll" resultType="com.kuaiyukuaikuai.pojo.Clazz">
+        SELECT c.*,e.name AS masterName
+        FROM clazz c
+        LEFT JOIN emp e
+        ON c.master_id = e.id
+        <where>
+            <if test="name != null and name != ''">
+                AND c.name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="begin != null">
+                AND c.end_date &gt;= #{begin}
+            </if>
+            <if test="end != null">
+                AND c.end_date &lt;= #{end}
+            </if>
+        </where>
+    </select>
+</mapper>

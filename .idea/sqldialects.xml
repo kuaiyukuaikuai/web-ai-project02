@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/tlias-web-management/src/main/java/com/kuaiyukuaikuai/mapper/EmpLogMapper.java" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/tlias-web-management/src/main/java/com/kuaiyukuaikuai/mapper/EmpMapper.java" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/tlias-web-management/src/main/resources/com/kuaiyukuaikuai/mapper/ClazzMapper.xml" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/tlias-web-management/src/main/resources/com/kuaiyukuaikuai/mapper/EmpExprMapper.xml" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/tlias-web-management/src/main/resources/com/kuaiyukuaikuai/mapper/EmpMapper.xml" dialect="MySQL" />
+    <file url="PROJECT" dialect="MySQL" />
+  </component>
+</project>

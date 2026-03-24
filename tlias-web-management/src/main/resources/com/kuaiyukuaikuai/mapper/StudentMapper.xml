@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.kuaiyukuaikuai.mapper.StudentMapper">
+
+    <!-- 分页查询学生 -->
+    <select id="list" resultType="com.kuaiyukuaikuai.pojo.Student">
+        SELECT 
+            s.*,
+            c.name AS clazz_name
+        FROM student s
+        LEFT JOIN clazz c ON s.clazz_id = c.id
+        <where>
+            <if test="name != null and name != ''">
+                AND s.name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="gender != null">
+                AND s.gender = #{gender}
+            </if>
+            <if test="phone != null and phone != ''">
+                AND s.phone LIKE CONCAT('%', #{phone}, '%')
+            </if>
+            <if test="no != null and no != ''">
+                AND s.no LIKE CONCAT('%', #{no}, '%')
+            </if>
+            <if test="clazzId != null">
+                AND s.clazz_id = #{clazzId}
+            </if>
+            <if test="beginGraduationDate != null">
+                AND s.graduation_date &gt;= #{beginGraduationDate}
+            </if>
+            <if test="endGraduationDate != null">
+                AND s.graduation_date &lt;= #{endGraduationDate}
+            </if>
+        </where>
+        ORDER BY s.create_time DESC
+    </select>
+
+    <!-- 查询所有学生 -->
+    <select id="listAll" resultType="com.kuaiyukuaikuai.pojo.Student">
+        SELECT 
+            s.*,
+            c.name AS clazz_name
+        FROM student s
+        LEFT JOIN clazz c ON s.clazz_id = c.id
+        ORDER BY s.create_time DESC
+    </select>
+
+    <!-- 根据 ID 查询学生 -->
+    <select id="getById" resultType="com.kuaiyukuaikuai.pojo.Student">
+        SELECT 
+            s.*,
+            c.name AS clazz_name
+        FROM student s
+        LEFT JOIN clazz c ON s.clazz_id = c.id
+        WHERE s.id = #{id}
+    </select>
+
+    <!-- 根据 ID 批量删除学生 -->
+    <delete id="deleteByIds">
+        DELETE FROM student WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 更新学生信息 -->
+    <update id="updateById">
+        UPDATE student
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="no != null and no != ''">
+                no = #{no},
+            </if>
+            <if test="gender != null">
+                gender = #{gender},
+            </if>
+            <if test="phone != null and phone != ''">
+                phone = #{phone},
+            </if>
+            <if test="idCard != null and idCard != ''">
+                id_card = #{idCard},
+            </if>
+            <if test="isCollege != null">
+                is_college = #{isCollege},
+            </if>
+            <if test="address != null and address != ''">
+                address = #{address},
+            </if>
+            <if test="degree != null">
+                degree = #{degree},
+            </if>
+            <if test="graduationDate != null">
+                graduation_date = #{graduationDate},
+            </if>
+            <if test="clazzId != null">
+                clazz_id = #{clazzId},
+            </if>
+            <if test="violationCount != null">
+                violation_count = #{violationCount},
+            </if>
+            <if test="violationScore != null">
+                violation_score = #{violationScore},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 学生违纪扣分 -->
+    <update id="violation">
+        UPDATE student
+        SET 
+            violation_count = violation_count + 1,
+            violation_score = violation_score + #{score},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="countByClazzId" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM student
+        WHERE clazz_id = #{clazz_id}
+    </select>
+</mapper>

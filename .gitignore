@@ -1,0 +1,13 @@
+# 编译输出目录 (过滤掉所有的 target 文件夹)
+**/target/
+*.class
+
+# IntelliJ IDEA 本地配置 (过滤掉 .idea 文件夹)
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# 日志和系统文件
+*.log
+.DS_Store
