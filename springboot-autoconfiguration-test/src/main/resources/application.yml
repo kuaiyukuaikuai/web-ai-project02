@@ -1,0 +1,5 @@
+aliyun:
+  oss:
+    endpoint: https://oss-cn-beijing.aliyuncs.com
+    bucketName: java-ai-kuaiyukuaikuai
+    region: cn-beijing

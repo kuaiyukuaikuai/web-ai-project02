@@ -766,3 +766,426 @@ public class MyAspect6 {
 ```
 
 ![image-20260324101116285](./Tlias_JavaWeb.assets/image-20260324101116285.png)
+
+## ThreadLocal
+
+- ThreadLocal 并不是一个Thread，而是Thread的局部变量。
+- ThreadLocal为每个线程提供一份单独的存储空间，具有线程隔离的效果，不同的线程之间不会相互干扰。
+
+![img](./Tlias_JavaWeb.assets/1774325347197-1.png)
+
+- 常见方法：
+  - `public void set(T value)`` `  设置当前线程的线程局部变量的值
+  - `public T get()`` `                    返回当前线程所对应的线程局部变量的值
+  - `public void remove()`` `         移除当前线程的线程局部变量
+
+## **配置文件优先级排名（从高到低）：**
+
+1. 命令行参数 >  系统属性参数 > properties参数 > yml参数 > yaml参数
+
+## Bean的管理
+
+### Bean的作用域
+
+三种在web环境才生效：
+
+| 作用域      | 说明                                            |
+| ----------- | ----------------------------------------------- |
+| singleton   | 容器内同名称的bean只有一个实例（单例）（默认）  |
+| prototype   | 每次使用该bean时会创建新的实例（非单例）        |
+| request     | 每个请求范围内会创建新的实例（web环境中，了解） |
+| session     | 每个会话范围内会创建新的实例（web环境中，了解） |
+| application | 每个应用范围内会创建新的实例（web环境中，了解） |
+
+知道了bean的5种作用域了，我们要怎么去设置一个bean的作用域呢？
+
+- 可以借助Spring中的@Scope注解来进行配置作用域(作用域 = 对象的创建规则)
+
+![img](./Tlias_JavaWeb.assets/1774338953551-4.png)
+
+**测试一**
+
+- 控制器
+
+```Java
+//默认bean的作用域为：singleton (单例)
+@RestController
+@RequestMapping("/depts")
+public class DeptController {
+
+    @Autowired
+    private DeptService deptService;
+
+    public DeptController(){
+        System.out.println("DeptController constructor ....");
+    }
+
+    //省略其他代码...
+}
+```
+
+- 测试类
+
+```Java
+@SpringBootTest
+class SpringbootWebConfig2ApplicationTests {
+
+    @Autowired
+    private ApplicationContext applicationContext; //IOC容器对象
+
+    //bean的作用域
+    @Test
+    public void testScope(){
+        for (int i = 0; i < 10; i++) {
+            DeptController deptController = applicationContext.getBean(DeptController.class);
+            System.out.println(deptController);
+        }
+    }
+}
+```
+
+重启SpringBoot服务，运行测试方法，查看控制台打印的日志：
+
+![img](./Tlias_JavaWeb.assets/1774339199778-7.png)
+
+**注意事项：**
+
+- IOC容器中的bean默认使用的作用域：singleton (单例)
+- 默认singleton的bean，在容器启动时被创建，可以使用@Lazy注解来延迟初始化(延迟到第一次使用时)
+
+**2). 测试二**
+
+修改控制器DeptController代码：
+
+```Java
+@Scope("prototype") //bean作用域为非单例
+@RestController
+@RequestMapping("/depts")
+public class DeptController {
+
+    @Autowired
+    private DeptService deptService;
+
+    public DeptController(){
+        System.out.println("DeptController constructor ....");
+    }
+
+    //省略其他代码...
+}
+```
+
+重启SpringBoot服务，再次执行测试方法，查看控制吧打印的日志：
+
+![img](./Tlias_JavaWeb.assets/1774339199778-8.png)
+
+**注意事项：**
+
+- prototype的bean，每一次使用该bean的时候都会创建一个新的实例
+- 实际开发当中，绝大部分的Bean是单例的，也就是说绝大部分Bean不需要配置scope属性
+
+- 默认singleton的bean，在容器启动时被创建，可以使用**@Lazy**注解来延迟初始化（延迟到第一次使用时）
+- prototype的bean，每一次使用该bean的时候都会创建一个新的实例。
+- 实际开发当中，绝大部分的bean是单例的，也就是说绝大部分bean不需要配置scope属性。
+
+### 第三方Bean
+
+```Java
+package com.itheima.config;
+
+import com.itheima.utils.AliyunOSSOperator;
+import com.itheima.utils.AliyunOSSProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OSSConfig {
+    @Bean
+    public AliyunOSSOperator aliyunOSSOperator(AliyunOSSProperties ossProperties) {
+        return new AliyunOSSOperator(ossProperties);
+    }
+}
+```
+
+- 通过`@Bean`注解的name 或 value属性可以声明bean的名称，如果不指定，默认bean的名称就是方法名。
+- 如果第三方bean需要依赖其他bean对象，直接在bean定义方法中设置形参即可，容器会根据类型自动装配。
+- ==@Configuration注解:在启动时自动扫描只会扫描本包及子包的@Configuration,如果@Configuration在其他包则不会被扫描到==
+
+## SpringBoot原理
+
+### 自动配置
+
+**思考：引入进来的第三方依赖当中的bean以及配置类为什么没有生效？**
+
+- 原因在我们之前讲解IOC的时候有提到过，在类上添加`@Component`注解来声明bean对象时，还需要保证`@Component`注解能被Spring的组件扫描到。
+
+- SpringBoot项目中的`@SpringBootApplication`注解，具有包扫描的作用，但是它只会扫描启动类所在的当前包以及子包。 
+
+- 当前包：com.itheima， 第三方依赖中提供的包：com.example（扫描不到）
+
+  - 方案1：`@ComponentScan` 组件扫描
+
+    ```Java
+    @SpringBootApplication
+    @ComponentScan({"com.itheima","com.example"}) //指定要扫描的包
+    public class SpringbootWebConfigApplication {
+        public static void main(String[] args) {
+            SpringApplication.run(SpringbootWebConfigApplication.class, args);
+        }
+    }
+    ```
+
+  - 方案2：`@Import` 导入（使用`@Import`导入的类会被Spring加载到IOC容器中）
+
+  - 导入形式主要有以下几种：
+
+    - 导入普通类
+
+      ```Java
+      @Import(TokenParser.class) //导入的类会被Spring加载到IOC容器中
+      @SpringBootApplication
+      public class SpringbootWebConfigApplication {
+          public static void main(String[] args) {
+              SpringApplication.run(SpringbootWebConfigApplication.class, args);
+          }
+      }
+      ```
+
+    - 导入配置类
+
+      ```Java
+      @Configuration
+      public class HeaderConfig {
+          @Bean
+          public HeaderParser headerParser(){
+              return new HeaderParser();
+          }
+      
+          @Bean
+          public HeaderGenerator headerGenerator(){
+              return new HeaderGenerator();
+          }
+      }
+      ```
+
+      ```Java
+      @Import(HeaderConfig.class) //导入配置类
+      @SpringBootApplication
+      public class SpringbootWebConfig2Application {
+          public static void main(String[] args) {
+              SpringApplication.run(SpringbootWebConfig2Application.class, args);
+          }
+      }
+      ```
+
+    - 导入ImportSelector接口实现类
+
+      ```Java
+      public class MyImportSelector implements ImportSelector {
+          public String[] selectImports(AnnotationMetadata importingClassMetadata) {
+              //返回值字符串数组（数组中封装了全限定名称的类）
+              return new String[]{"com.example.HeaderConfig"};
+          }
+      }
+      ```
+
+      ```Java
+      @Import(MyImportSelector.class) //导入ImportSelector接口实现类
+      @SpringBootApplication
+      public class SpringbootWebConfig2Application {
+          public static void main(String[] args) {
+              SpringApplication.run(SpringbootWebConfig2Application.class, args);
+          }
+      }
+      ```
+
+    - **使用第三方依赖提供的 @EnableXxxxx注解**
+
+      - 第三方依赖中提供的注解
+
+    ```Java
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    @Import(MyImportSelector.class)//指定要导入哪些bean对象或配置类
+    public @interface EnableHeaderConfig { 
+    }
+    ```
+
+    ​	在使用时只需在启动类上加上@EnableXxxxx注解即可
+
+    ```Java
+    @EnableHeaderConfig  //使用第三方依赖提供的Enable开头的注解
+    @SpringBootApplication
+    public class SpringbootWebConfig2Application {
+        public static void main(String[] args) {
+            SpringApplication.run(SpringbootWebConfig2Application.class, args);
+        }
+    }
+    ```
+
+#### **@Conditional注解：**
+
+- 作用：按照一定的条件进行判断，在满足给定条件后才会注册对应的bean对象到Spring的IOC容器中。
+- 位置：方法、类
+- @Conditional本身是一个父注解，派生出大量的子注解：
+  - @ConditionalOnClass：判断环境中有对应字节码文件，才注册bean到IOC容器。
+  - @ConditionalOnMissingBean：判断环境中没有对应的bean(类型或名称)，才注册bean到IOC容器。
+  - @ConditionalOnProperty：判断配置文件中有对应属性和值，才注册bean到IOC容器。
+
+下面我们通过代码来演示下Conditional注解的使用：
+
+- **`@ConditionalOnClass`**注解
+
+```Java
+@Configuration
+public class HeaderConfig {
+
+    @Bean
+    @ConditionalOnClass(name="io.jsonwebtoken.Jwts")//环境中存在指定的这个类，才会将该bean加入IOC容器
+    public HeaderParser headerParser(){
+        return new HeaderParser();
+    }
+    
+    //省略其他代码...
+}
+```
+
+- pom.xml
+
+```XML
+<!--JWT令牌-->
+<dependency>
+     <groupId>io.jsonwebtoken</groupId>
+     <artifactId>jjwt</artifactId>
+     <version>0.9.1</version>
+</dependency>
+```
+
+- 测试类
+
+```Java
+@SpringBootTest
+public class AutoConfigurationTests {
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Test
+    public void testHeaderParser(){
+        System.out.println(applicationContext.getBean(HeaderParser.class));
+    }
+    
+    //省略其他代码...
+}
+```
+
+执行testHeaderParser()测试方法：
+
+![img](./Tlias_JavaWeb.assets/1774404090826-13.png)
+
+因为 `io.jsonwebtoken.Jwts` 字节码文件在启动SpringBoot程序时已存在，所以创建HeaderParser对象并注册到IOC容器中。
+
+- **@ConditionalOnMissingBean注解**
+
+```Java
+@Configuration
+public class HeaderConfig {
+        
+    @Bean
+    @ConditionalOnMissingBean //不存在该类型的bean，才会将该bean加入IOC容器
+    public HeaderParser headerParser(){
+        return new HeaderParser();
+    }
+    
+    //省略其他代码...
+}
+```
+
+执行testHeaderParser()测试方法：
+
+![img](./Tlias_JavaWeb.assets/1774404090826-14.png)
+
+SpringBoot在调用@Bean标识的headerParser()前，IOC容器中是没有HeaderParser类型的bean，所以HeaderParser对象正常创建，并注册到IOC容器中。
+
+- **再次修改**@ConditionalOnMissingBean注解
+
+```Java
+@Configuration
+public class HeaderConfig {
+
+    @Bean
+    @ConditionalOnMissingBean//不存在指定类型的bean，才会将该bean加入IOC容器
+    public HeaderParser headerParser(){
+        return new HeaderParser();
+    }
+    
+    //省略其他代码...
+}
+```
+
+执行testHeaderParser()测试方法：
+
+![img](./Tlias_JavaWeb.assets/1774404090826-15.png)
+
+- **`@ConditionalOnProperty`**注解（这个注解和配置文件当中配置的属性有关系）
+
+先在`application.yml`配置文件中添加如下的键值对：
+
+```YAML
+name: itheima
+```
+
+在声明bean的时候就可以指定一个条件@ConditionalOnProperty
+
+```Java
+@Configuration
+public class HeaderConfig {
+
+    @Bean
+    @ConditionalOnProperty(name ="name",havingValue = "itheima")//配置文件中存在指定属性名与值，才会将bean加入IOC容器
+    public HeaderParser headerParser(){
+        return new HeaderParser();
+    }
+
+    @Bean
+    public HeaderGenerator headerGenerator(){
+        return new HeaderGenerator();
+    }
+}
+```
+
+执行testHeaderParser()测试方法：
+
+![img](./Tlias_JavaWeb.assets/1774404090826-16.png)
+
+修改`@ConditionalOnProperty`注解：  havingValue的值修改为"itheima2"
+
+```Java
+@Bean
+@ConditionalOnProperty(name ="name",havingValue = "itheima2")//配置文件中存在指定属性名与值，才会将bean加入IOC容器
+public HeaderParser headerParser(){
+        return new HeaderParser();
+}
+```
+
+再次执行testHeaderParser()测试方法：
+
+![img](./Tlias_JavaWeb.assets/1774404090826-17.png)
+
+> 因为 `application.yml` 配置文件中，不存在： name:  itheima2，所以HeaderParser对象在IOC容器中不存在
+
+
+
+自动配置的核心就在@SpringBootApplication注解上，SpringBootApplication这个注解底层包含了3个注解，分别是：
+
+- @SpringBootConfiguration
+- @ComponentScan
+- @EnableAutoConfiguration
+
+@EnableAutoConfiguration这个注解才是自动配置的核心。
+
+- 它封装了一个@Import注解，Import注解里面指定了一个ImportSelector接口的实现类。
+- 在这个实现类中，重写了ImportSelector接口中的selectImports()方法。
+- 而selectImports()方法中会去读取两份配置文件，并将配置文件中定义的配置类做为selectImports()方法的返回值返回，返回值代表的就是需要将哪些类交给Spring的IOC容器进行管理。
+- 那么所有自动配置类的中声明的bean都会加载到Spring的IOC容器中吗? 其实并不会，因为这些配置类中在声明bean时，通常都会添加@Conditional开头的注解，这个注解就是进行条件装配。而Spring会根据Conditional注解有选择性的进行bean的创建。
+- @Enable 开头的注解底层，它就封装了一个注解 import 注解，它里面指定了一个类，是 ImportSelector 接口的实现类。在实现类当中，我们需要去实现 ImportSelector  接口当中的一个方法 selectImports 这个方法。这个方法的返回值代表的就是我需要将哪些类交给 spring 的 IOC容器进行管理。
+- 此时它会去读取两份配置文件，一份儿是 spring.factories，另外一份儿是 autoConfiguration.imports。而在  autoConfiguration.imports 这份儿文件当中，它就会去配置大量的自动配置的类。
+- 而前面我们也提到过这些所有的自动配置类当中，所有的 bean都会加载到 spring 的 IOC 容器当中吗？其实并不会，因为这些配置类当中，在声明 bean 的时候，通常会加上这么一类@Conditional 开头的注解。这个注解就是进行条件装配。所以SpringBoot非常的智能，它会根据 @Conditional 注解来进行条件装配。只有条件成立，它才会声明这个bean，才会将这个 bean 交给 IOC 容器管理。
