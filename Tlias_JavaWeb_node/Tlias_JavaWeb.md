@@ -1189,3 +1189,15 @@ public HeaderParser headerParser(){
 - @Enable 开头的注解底层，它就封装了一个注解 import 注解，它里面指定了一个类，是 ImportSelector 接口的实现类。在实现类当中，我们需要去实现 ImportSelector  接口当中的一个方法 selectImports 这个方法。这个方法的返回值代表的就是我需要将哪些类交给 spring 的 IOC容器进行管理。
 - 此时它会去读取两份配置文件，一份儿是 spring.factories，另外一份儿是 autoConfiguration.imports。而在  autoConfiguration.imports 这份儿文件当中，它就会去配置大量的自动配置的类。
 - 而前面我们也提到过这些所有的自动配置类当中，所有的 bean都会加载到 spring 的 IOC 容器当中吗？其实并不会，因为这些配置类当中，在声明 bean 的时候，通常会加上这么一类@Conditional 开头的注解。这个注解就是进行条件装配。所以SpringBoot非常的智能，它会根据 @Conditional 注解来进行条件装配。只有条件成立，它才会声明这个bean，才会将这个 bean 交给 IOC 容器管理。
+
+### 自定义starter
+
+Spring Boot 启动时，通过 `@EnableAutoConfiguration` 引导加载 `AutoConfigurationImportSelector`，它会去所有依赖包的 `META-INF` 目录下读取约定好的 `.imports`（或 `spring.factories`）文件，获取所有自动配置类的名单。然后，结合 `@Conditional` 系列条件注解进行按需加载，最终把满足条件的 Bean 自动注入到 Spring 容器中，实现了开箱即用。”
+
+#### 实现流程
+
+1. 从pom.xml引入 Starter,传递依赖,Starter将模块拉进
+2. `TliasWebManagementApplication.main()` 方法启动,注解@SpringBootApplication内含有@EnableAutoConfiguration内含有**AutoConfigurationImportSelector**(自动扫描)META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+3. Spring 容器拿到了 `AliyunOSSAutoConfiguration` 这个类,进行条件判断 (`@Conditional`),条件通过后实例化组件,执行这个配置类里的 `@Bean` 方法，在内存中真正创建出一个 `AliyunOSSOperator` 对象,并把它妥善保管在 Spring 容器（IOC 容器）
+4. Controller 依赖注入,Spring 扫描到 `com.kuaiyukuaikuai.controller.UploadController`,**自动装配**：当 Spring 准备实例化 `UploadController` 时，发现了里面有一行 `@Autowired private AliyunOSSOperator aliyunOSSOperator`,Spring 立刻去自己的容器里找出该对象
+

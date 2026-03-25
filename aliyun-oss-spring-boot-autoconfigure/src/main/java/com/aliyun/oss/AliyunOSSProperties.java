@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 
-@ConfigurationProperties(prefix = "aliyun.oss")
+@ConfigurationProperties(prefix = "aliyun.oss")// 指定配置文件的前缀
 public class AliyunOSSProperties {
     private String endpoint;
     private String bucketName;
